@@ -1,0 +1,56 @@
+//BulletWave
+//    t: 0.2 > [Combo, ...]
+//    t: 0.8 > Combo
+//    duration: 1000 = Combo#1 at 200 etc.
+//    life: 10000 = 10 loops
+//
+//BulletCombo
+//    bullets:
+//        ....
+//
+//Bullets
+//    
+//
+//EnemyWave
+//    
+//
+//EnemyCombo
+//
+//
+//Enemy
+//
+//
+//Stage
+//    t: [EnemyWave, ...]
+
+var BulletWaves = (function() {
+
+    // BulletWave object, pretty much a struct
+    function BulletWave(bullets, x, y, r) {
+        
+    }
+    
+    var time = 0,
+        active = [],
+        game = null;
+
+    // Inititate the bulletWave Module 
+    function init(game) {
+        game = game;
+    }
+
+    // Spawn a wave of the given type at x, y with rotation offset R and position offset calculated from dr and di
+    function spawn(type, x, y, r, dr, di) {
+        
+    }
+
+    // Update bullets based on the time value given
+    // Bullets live until they hit something or leave the screen
+    function update(t) {
+        
+    }
+
+})();
+
+
+
