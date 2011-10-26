@@ -33,7 +33,7 @@ var BulletComboTypes = {
 
     player: {
 
-        bullets: [{
+        bullets: ['l', {
 
             type: 'player',
             r: 0, // rotation offset of the bullet
@@ -55,7 +55,7 @@ var BulletComboTypes = {
 
     spread3_45_rotate: {
 
-        bullets: [{
+        bullets: ['l', {
 
             at: 0.33,
             type: 'simple',
@@ -88,7 +88,7 @@ var BulletComboTypes = {
 
     spread3: {
 
-        bullets: [{
+        bullets: ['l', {
 
             at: 0,
             type: 'simple',
@@ -122,7 +122,7 @@ var BulletComboTypes = {
 
     slash: {
 
-        bullets: [{
+        bullets: ['l', {
 
             at: 0,
             type: 'simple',
@@ -135,17 +135,18 @@ var BulletComboTypes = {
         r: 0,
         rps: -0.7,
         interval: 32,
-        duration: 500
+        duration: 500,
+        pause: 2000
 
     },
 
     rays: {
 
-        bullets: [{
+        bullets: ['l', {
 
             at: 0,
             type: 'ray',
-            r: ['r', -10, -5],
+            r: ['r', -90, 0],
             dr: 0,
             di: 0
 
@@ -153,13 +154,45 @@ var BulletComboTypes = {
 
             at: 0,
             type: 'ray',
-            r: ['r', 5, 10],
+            r: ['r', 0, 90],
             dr: 0,
+            di: 0
+
+        }, {
+
+            at: 0,
+            type: 'ray',
+            r: ['r', -90, 0],
+            dr: 0,
+            di: 0
+
+        }, {
+
+            at: 0,
+            type: 'ray',
+            r: ['r', 0, 90],
+            dr: 0,
+            di: 0
+
+        }, {
+
+            at: 0,
+            type: 'ray',
+            r: ['r', -90, 0],
+            dr: 0,
+            di: 0
+
+        }, {
+
+            at: 0,
+            type: 'ray',
+            r: ['r', 0, 90],
+            dr: 0, // Use X / Y offsets and calculate from that
             di: 0
 
         }],
 
-        interval: 80
+        interval: 24
 
     }
 

@@ -21,6 +21,9 @@ function getValue(data, key, def) {
         if (value[0] === 'r') {
             return randint(value[1], value[2])
 
+        } else if (value[0] === 'l') {
+            return value.slice(1);
+
         } else {
             return value[randint(0, value.length)];
         }

@@ -9,8 +9,8 @@ var Bullets = (function() {
         size = 10,
 
         material = new THREE.MeshBasicMaterial({
-            color: 0xffffff
-//            wireframe: true
+            color: 0xffffff,
+            wireframe: true
         });
 
     // Inititate the bullet Module and pool bullet objects
@@ -88,8 +88,8 @@ var Bullets = (function() {
             if (x < minX - b.six || x > maxX + b.six || y < minY - b.siy || y > maxY + b.siy) {
 
                 active.splice(i, 1);
-                game.scene.remove(b.mesh);
                 b.used = false;
+                game.scene.remove(b.mesh);
                 i--;
                 l--;
 
@@ -128,15 +128,20 @@ var Bullets = (function() {
         this.sx = (scaleX || 1);
         this.sy = (scaleY || 1);
         this.rps = rps ? rps * (Math.PI * 2 / 1000) : 0;
-        this.time = time;;
+        this.time = time;
 
-        this.six = size * this.sx;
-        this.siy = size * this.sy;
+        // Scaled size + out of screen
+        this.six = size * this.sx * 2;
+        this.siy = size * this.sy * 2;
 
         this.mesh.position.x = this.x;
         this.mesh.position.y = this.y;
         this.mesh.scale.x = this.sx;
         this.mesh.scale.y = this.sy;
+
+        // Bound size
+        this.bix = this.sx * size;
+        this.biy = this.sy * size;
 
         if (!init) {
             active.push(this);
@@ -194,8 +199,7 @@ var BulletCombos = (function() {
 
         var rps = getValue(data, 'rps', 0);
 
-        active.push(new BulletCombo(getValue(data, 'interval', 100), getValue(data, 'duration', 0),
-                                    data.bullets || [], x, y, speed, r, rps));
+        active.push(new BulletCombo(data, x, y, speed, r, rps));
 
     }
 
@@ -203,8 +207,8 @@ var BulletCombos = (function() {
     // Bullets live until they hit something or leave the screen
     function update(t) {
 
-
         time = t;
+
         for(var i = 0, l = active.length; i < l; i++) {
 
             var combo = active[i];
@@ -223,17 +227,20 @@ var BulletCombos = (function() {
 
     }
 
-    function BulletCombo(interval, duration, bullets, x, y, speed, rotation, rps) {
+    function BulletCombo(data, x, y, speed, rotation, rps) {
 
         this.time = time;
         this.lastRun = time;
 
         // Patch values to give the expected results from the config
+        var interval = getValue(data, 'interval', 100),
+            duration = getValue(data, 'duration', 0);
+
         this.interval = Math.round(interval / game.tick) * game.tick;
         this.duration = Math.round(duration / game.tick) * game.tick;
 
         if (this.duration > 0) {
-            this.duration = Math.ceil(duration / this.interval) * this.interval;
+            this.duration = Math.floor(this.duration / this.interval) * this.interval;
         }
 
         this.x = x;
@@ -243,6 +250,7 @@ var BulletCombos = (function() {
         this.rps = rps ? rps * (Math.PI * 2 / 1000) : 0;
         this.bullets = [];
 
+        var bullets = getValue(data, 'bullets', []);
         for(var i = 0, l = bullets.length; i < l; i++) {
 
             var bullet = bullets[i];
@@ -250,7 +258,7 @@ var BulletCombos = (function() {
             // convert float based at times into actual integers based on the current frame rate
             // this simplifies and speeds up stuff
             var at = getValue(bullet, 'at', 0.5),
-                atTick = Math.floor((interval * at) / game.tick) * game.tick;
+                atTick = Math.floor((this.interval * at) / game.tick) * game.tick;
 
             this.bullets.push({
 
