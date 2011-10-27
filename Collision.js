@@ -1,22 +1,56 @@
-// Collision Managment ========================================================
-// ============================================================================
+/**
+  * Project Iar
+  * Copyright (c) 2011 Ivo Wetzel.
+  *
+  * All rights reserved.
+  *
+  * Project Iar is free software: you can redistribute it and/or
+  * modify it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * Project Iar is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License along with
+  * Project Iar. If not, see <http://www.gnu.org/licenses/>.
+  */
+
+// TODO Refactor
 var Collisions = (function() {
 
-    // We have are divides in groups here:
-    // bullets and ships
-    // for which we keep 2 lists each
-
     // TODO do ray casting for lasers!!
+    function collideGroups(a, b, func) {
 
+        for(var i = 0, l = a.length; i < l; i++) {
 
+            for(var e = 0, el = b.length; e < el; e++) {
+
+                if (a[i].overlaps(b[e])) {
+                    func(a, b);
+                }
+
+            }
+
+        }
+
+    }
+
+    // Converted and optimized from:
     // http://www.flipcode.com/archives/2D_OBB_Intersection.shtml
-    function OBB(center, w, h, angle) {
+    function OBB(w, h) {
 
         this.w = w / 2;
         this.h = h / 2;
         this.axis = [];
         this.origin = [];
-        this.transform(center, angle);
+        this.invalidAxis = true;
+
+        this.x = 0;
+        this.y = 0;
+        this.radius = Math.max(w, h);
 
     }
 
@@ -42,6 +76,8 @@ var Collisions = (function() {
                 this.origin[i] = c[0] * a[0] + c[1] * a[1];
 
             }
+
+            this.invalidAxis = false;
 
         },
 
@@ -107,33 +143,66 @@ var Collisions = (function() {
 
             }
 
-            this.computeAxis();
-
-        },
-
-        rotate: function() {
+            this.x = center.x;
+            this.y = center.y;
+            this.invalidAxis = true;
 
         },
 
         overlaps: function(other) {
-            return this.overlapsOne(other) && other.overlapsOne(this);
+
+            var dx = this.x - other.x,
+                dy = this.y - other.y;
+
+            dx *= dx;
+            dy *= dy;
+
+            var rr = this.radius * other.radius;
+            if (dx + dy <= rr) {
+
+                if (this.invalidAxis) {
+                    this.computeAxis();
+                }
+
+                if (other.invalidAxis) {
+                    other.computeAxis();
+                }
+
+                return this.overlapsOne(other) && other.overlapsOne(this);
+
+            } else {
+                return false;
+            }
+
         }
 
-    }
+    };
 
-    var a = { x:-26, y: 0 },
-        b = { x: 25, y: 20 },
-        c = { x: 40, y: 40 },
-        f = { x: 40, y: -10 }
+    return {
+        OBB: OBB
+    };
 
-    var ao = new OBB(a, 50, 50, 0),
-        bo = new OBB(b, 50, 50, 0),
-        co = new OBB(c, 50, 50, 0);
-        fo = new OBB(f, 50, 50, 0);
-
-    console.log(ao.overlaps(bo));
-    console.log(bo.overlaps(co));
-    console.log(fo.overlaps(co));
+//    var a = { x:-26, y: 0 },
+//        b = { x: 25, y: 20 },
+//        c = { x: 40, y: 40 },
+//        f = { x: 40, y: -10 }
+//
+//    var ao = new OBB(50, 50),
+//        bo = new OBB(50, 50),
+//        co = new OBB(50, 50);
+//        fo = new OBB(50, 50);
+//
+//    ao.transform(a, 0);
+//    bo.transform(b, 0);
+//    co.transform(c, 0);
+//    fo.transform(f, 0);
+//
+//    console.log(ao.overlaps(bo));
+//    console.log(bo.overlaps(co));
+//    console.log(fo.overlaps(co));
+//
+//    fo.transform(b, 0);
+//    console.log(fo.overlaps(co));
 
 })();
 
