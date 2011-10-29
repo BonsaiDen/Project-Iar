@@ -20,11 +20,10 @@
 var BulletTypes = {
 
     player: {
-        sx: 0.5, // x scale of the bullet plane
-        sy: 2, // y scale of the bullet plane
-        r: 10, // base rotation of the bullet direction
-        speed: 30, // base speed of the bullet
-        rps: 0.5 // rotations per second of the bullet
+        sx: 1, // x scale of the bullet plane
+        sy: 1, // y scale of the bullet plane
+        speed: 10, // base speed of the bullet
+        rps: 0
     },
 
     spread45: {
@@ -40,9 +39,9 @@ var BulletTypes = {
     },
 
     ray: {
-        speed: 40,
+        speed: 30,
         sx: 0.5,
-        sy: 2
+        sy: 1
     }
 
 };
@@ -57,18 +56,18 @@ var BulletComboTypes = {
             type: 'player',
             r: 0, // rotation offset of the bullet
             dr: -90, // offset rotation for the start position of the bullet
-            di: 50 // offset distance for the start position of the bullet
+            di: 20 // offset distance for the start position of the bullet
 
         }, {
 
             type: 'player',
             r: 0,
             dr: 90,
-            di: 50
+            di: 20
 
         }],
 
-        interval: 50
+        interval: 300
 
     },
 

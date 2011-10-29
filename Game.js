@@ -18,6 +18,8 @@
   * Project Iar. If not, see <http://www.gnu.org/licenses/>.
   */
 
+var DEBUG = false;
+
 function Game() {
 
     this.element = null;
@@ -162,15 +164,15 @@ Game.prototype = {
                 this.gameTime += this.tick;
 
                 var before = Date.now();
-                this.player.update(this.gameTime);
+//                this.player.update(this.gameTime);
                 this.playerCombos.update(this.gameTime);
                 this.playerBullets.update(this.gameTime);
 
                 this.enemies.update(this.gameTime);
-                this.enemyCombos.update(this.gameTime);
-                this.enemyBullets.update(this.gameTime);
+//                this.enemyCombos.update(this.gameTime);
+//                this.enemyBullets.update(this.gameTime);
 
-//                this.enemies.collide(this.playerBullets);
+                this.enemies.collide(this.playerBullets);
                 this.upateTook = Date.now() - before;
 
             }
@@ -192,7 +194,7 @@ Game.prototype = {
 
 
 function Iar(id, w, h, debug) {
-    var game = new Game();
+    game = new Game();
     game.init(document.getElementById(id), w, h);
     game.run();
     game.debug(document.getElementById(debug));

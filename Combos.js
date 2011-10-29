@@ -38,10 +38,10 @@ var ComboObject = Class(function(pool) {
             tick = this.game.tick;
 
         this.interval = Math.round(interval / tick) * tick;
-        this.duration = Math.round(duration / tick) * tick;
+        this.duration = Math.ceil(duration / tick) * tick;
 
         if (this.duration > 0) {
-            this.duration = Math.floor(this.duration / this.interval) * this.interval;
+            this.duration = Math.ceil(this.duration / this.interval) * this.interval;
         }
 
         this.x = p.x;
@@ -84,6 +84,10 @@ var ComboObject = Class(function(pool) {
 
     update: function(t) {
 
+        if (this.duration > 0 && t - this.time > this.duration) {
+            return this.destroy(t);
+        }
+
         var bct = t - this.time,
             tick = this.game.tick;
             bulletTick = Math.floor((bct % this.interval) / tick) * tick;
@@ -112,8 +116,6 @@ var ComboObject = Class(function(pool) {
             }
 
         }
-
-        return this.duration > 0 && t - this.time > this.duration;
 
     }
 

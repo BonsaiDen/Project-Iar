@@ -28,20 +28,26 @@ var ShipObject = Class(function(pool) {
 
     create: function(t, p) {
 
-        Super.create(t, p);
-
         this.x = p.x;
         this.y = p.y;
-        this.mesh.position.x = p.x;
-        this.mesh.position.y = p.y;
+        this.angle = 0;
 
+        this.scaleX = (p.scaleX || 5);
+        this.scaleY = (p.scaleY || 1);
+
+        Super.create(t, p);
+
+    },
+
+    update: function(t) {
+        Super.update(t);
     },
 
     destroy: function(t) {
         Super.remove(t);
     }
 
-}, MeshObject);
+}, CollideMeshObject);
 
 
 // Pool ----------------------------------------------------------------------
@@ -64,5 +70,5 @@ var ShipPool = Class(function(game, max) {
 
     }
 
-}, MeshPool);
+}, CollideMeshPool);
 
