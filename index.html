@@ -19,15 +19,21 @@
 
         </style>
         <script src="Three.js"></script>
-        <script src="utils.js"></script>
-        <script src="BulletTypes.js"></script>
-        <script src="Collision.js"></script>
-        <script src="Pools.js"></script>
+        <script src="Data.js"></script>
+
+        <script src="Class.js"></script>
+        <script src="Objects.js"></script>
+        <script src="Meshes.js"></script>
+        <script src="Ships.js"></script>
+        <script src="Bullets.js"></script>
+        <script src="Combos.js"></script>
+
         <script src="Game.js"></script>
 
     </head>
 
-    <body onload="Game.init('screen', 380, 600)">
+    <body onload="Iar('screen', 380, 600, 'debug')">
+        <div id="debug"></div>
         <div id="screen">
         </div>
     </body>

@@ -17,116 +17,234 @@
   * You should have received a copy of the GNU General Public License along with
   * Project Iar. If not, see <http://www.gnu.org/licenses/>.
   */
-var Game = (function() {
 
-    var game = {
+function Game() {
 
-        scene: null,
-        rect: { l: 0, r: 0, t: 0, b: 0 },
-        width: 0,
-        height: 0,
-        paused: false,
-        fps: 0,
-        tick: 0
+    this.element = null;
+    this.debugElement = null;
+    this.scene = null;
+    this.renderer = null;
+    this.scene = null;
 
+    this.running = false;
+    this.paused = false;
+    this.lastUpdate = false;
+    this.browserTime = 0;
+    this.gameTime = 0;
+
+    this.rect = {
+        l: 0, r: 0,
+        t: 0, b: 0
     };
 
-    var element = null,
-        renderer = null,
-        scene = null,
-        camera = null,
-        bullets = null,
-        combos = null;
+    this.width = 0;
+    this.height = 0;
+    this.fps = 0;
+    this.tick = 0;
 
-    var gameTime = 0,
-        lastUpdate = 0,
-        browserTime = 0;
+}
 
-    function init(elementId, width, height, fps) {
+Game.prototype = {
 
-        // Size
-        game.width = width;
-        game.height = height;
-        game.fps = fps || 60;
-        game.tick = Math.floor(1000 / game.fps);
+    init: function(element, width, height, fps) {
 
-        var rect = game.rect;
+        this.width = width;
+        this.height = height;
+        this.fps = fps || 60;
+        this.tick = Math.floor(1000 / this.fps);
+        this.element = element;
+
+        var rect = this.rect;
         rect.l = -(width / 2);
         rect.r = (width / 2);
         rect.t = height;
         rect.b = 0;
 
-        // Rendering
-        renderer = new THREE.WebGLRenderer();
-        renderer.setSize(width, height);
+        this.initRendering();
+        this.initPools();
+        this.playerCombos.create('rays', 0, 300);
+        this.enemies.create('player', 0, 500);
 
-        game.scene = scene = new THREE.Scene();
-        camera = new THREE.OrthographicCamera(rect.l, rect.r, rect.t, rect.b, 1, 100);
-        camera.position.z = 5;
+    },
+
+    initPools: function() {
+
+        this.player = new ShipPool(this, 1);
+        this.enemies = new ShipPool(this, 20);
+
+        this.playerBullets = new BulletPool(this, 500);
+        this.enemyBullets = new BulletPool(this, 500);
+
+        this.playerCombos = new ComboPool(this, 10, this.playerBullets);
+        this.enemyCombos = new ComboPool(this, 50, this.enemyBullets);
+
+    },
+
+    initRendering: function() {
+
+        // Rendering
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.setSize(this.width, this.height);
+        this.scene = new THREE.Scene();
+
+        // Map camera so that 0 is at the bottom of the screen and +x is on the right
+        this.camera = new THREE.OrthographicCamera(this.rect.l, this.rect.r,
+                                                   this.rect.t, this.rect.b, 1, 100);
+
+        this.camera.position.z = 5;
 
         // DOM canvas stuff
-        element = document.getElementById(elementId);
-        element.appendChild(renderer.domElement);
+        this.element.appendChild(this.renderer.domElement);
 
-        // Initiate modules
-        bullets = new BulletPool(game, 500);
-        combos = new ComboPool(game, 50, bullets);
+        // Render loop creation
+        var that = this;
+        this.renderLoop = function renderLoop() {
 
-        combos.add('rays', 0, 300);
-//        combos.add('rays', 0, 300, 0, 180);
+            requestAnimFrame(renderLoop, that.element);
+            that.renderer.render(that.scene, that.camera);
 
-        // Loops
-        renderLoop();
+        };
 
-        lastUpdate = Date.now();
-        setInterval(updateLoop, game.tick);
+    },
 
-    }
+    run: function() {
 
-    function updateLoop() {
+        if (!this.running) {
+
+            this.renderLoop();
+            this.lastUpdate = Date.now();
+
+            var that = this,
+                runner = setInterval(function() {
+
+                    if (!that.running) {
+                        clearInterval(runner);
+                        return;
+                    }
+
+                    that.updateLoop();
+
+                }, this.tick);
+
+            this.running = true;
+
+        }
+
+    },
+
+    pause: function() {
+        this.paused = true;
+    },
+
+    resume: function() {
+        this.paused = false;
+    },
+
+    stop: function() {
+        this.running = false;
+    },
+
+    debug: function(element) {
+        this.debugElement = element;
+    },
+
+    updateLoop: function() {
 
         var now = Date.now();
 
         // Add difference to browserTime
-        if (!game.paused) {
+        if (!this.paused) {
 
-            browserTime += now - lastUpdate;
-            while(gameTime < browserTime) {
-                gameTime += game.tick;
-                update();
+            // Ensure that throttling of intervals and other things does not effect framerate
+            this.browserTime += now - this.lastUpdate;
+            while(this.gameTime < this.browserTime) {
+
+                this.gameTime += this.tick;
+
+                var before = Date.now();
+                this.player.update(this.gameTime);
+                this.playerCombos.update(this.gameTime);
+                this.playerBullets.update(this.gameTime);
+
+                this.enemies.update(this.gameTime);
+                this.enemyCombos.update(this.gameTime);
+                this.enemyBullets.update(this.gameTime);
+
+//                this.enemies.collide(this.playerBullets);
+                this.upateTook = Date.now() - before;
+
             }
 
         }
 
-        lastUpdate = Date.now();
-
-    }
-
-    function update() {
-
-        combos.update(gameTime);
-        bullets.update(gameTime);
-
-    }
-
-    function renderLoop() {
-        requestAnimFrame(renderLoop, element);
-        renderer.render(scene, camera);
-    }
-
-    return {
-
-        init: init,
-
-        pause: function() {
-            game.paused = true;
-        },
-
-        resume: function() {
-            game.paused = false;
+        if (this.debugElement) {
+            this.debugElement.textContent = 'Time: ' + this.gameTime + ' / ' + this.tick + ' | ' + '~' + this.upateTook + 'ms per Frame';
         }
 
-    };
+        this.lastUpdate = Date.now();
+
+    },
+
+    renderLoop: function() {
+    }
+
+};
+
+
+function Iar(id, w, h, debug) {
+    var game = new Game();
+    game.init(document.getElementById(id), w, h);
+    game.run();
+    game.debug(document.getElementById(debug));
+};
+
+
+// Utils ---------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+function randint(min, max) {
+    return Math.floor(min + (max - min) * Math.random()); // implement seeded pseudo later for replays...
+}
+
+function toRadian(r) {
+    return r / 180 * Math.PI;
+}
+
+function getValue(data, key, def) {
+
+    var value = data[key]
+    if (value === undefined) {
+        return def;
+
+    } else if (typeof value === 'number') {
+        return value;
+
+    } else {
+
+        if (value[0] === 'r') {
+            return randint(value[1], value[2])
+
+        } else if (value[0] === 'l') {
+            return value.slice(1);
+
+        } else {
+            return value[randint(0, value.length)];
+        }
+
+    }
+
+}
+
+window.requestAnimFrame = (function() {
+
+    return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function(/* function */ callback, /* DOMElement */ element) {
+                window.setTimeout(callback, 1000 / 60);
+            };
 
 })();
+
 
