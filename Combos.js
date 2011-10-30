@@ -29,9 +29,6 @@ var ComboObject = Class(function(pool) {
 
     create: function(t, p) {
 
-        this.time = t;
-        this.lastRun = t;
-
         // Patch values to give the expected results from the config
         var interval = getValue(p.data, 'interval', 100),
             duration = getValue(p.data, 'duration', 0),
@@ -47,7 +44,7 @@ var ComboObject = Class(function(pool) {
         this.x = p.x;
         this.y = p.y;
         this.speed = p.speed;
-        this.r = toRadian(p.r);
+        this.oAngle = toRadian(p.angle);
         this.rps = p.rps ? p.rps * (Math.PI * 2 / 1000) : 0;
         this.bullets = [];
 
@@ -84,13 +81,12 @@ var ComboObject = Class(function(pool) {
 
     update: function(t) {
 
-        if (this.duration > 0 && t - this.time > this.duration) {
+        if (this.duration > 0 && t > this.duration) {
             return this.destroy(t);
         }
 
-        var bct = t - this.time,
-            tick = this.game.tick;
-            bulletTick = Math.floor((bct % this.interval) / tick) * tick;
+        var tick = this.game.tick;
+            bulletTick = Math.floor((t % this.interval) / tick) * tick;
 
         for(var i = this.bulletIndex; i < this.bulletCount; i++) {
 
@@ -98,7 +94,7 @@ var ComboObject = Class(function(pool) {
             if (bulletTick === bullet.at) {
 
                 // Calculate intermediate values of the this
-                var r = this.r + this.rps * bct,
+                var r = this.oAngle + this.rps * t,
                     speed = this.speed + bullet.speed;
 
                 r = r * (180 / Math.PI);
@@ -141,7 +137,7 @@ var ComboPool = Class(function(game, max, bulletPool) {
         Super.create({
 
             data: data,
-            r: (r || 0) + getValue(data, 'r', 0),
+            angle: (r || 0) + getValue(data, 'r', 0),
             speed: (speed || 0) + getValue(data, 'speed', 0),
             x: x + Math.sin(dr) * di,
             y: y + Math.cos(dr) * di,

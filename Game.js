@@ -18,7 +18,7 @@
   * Project Iar. If not, see <http://www.gnu.org/licenses/>.
   */
 
-var DEBUG = false;
+var DEBUG = true;
 
 function Game() {
 
@@ -85,7 +85,11 @@ Game.prototype = {
     initRendering: function() {
 
         // Rendering
-        this.renderer = new THREE.WebGLRenderer();
+        this.renderer = new THREE.WebGLRenderer({
+            antialias: false,
+            stencil: false,
+            sortObjects: false
+        });
         this.renderer.setSize(this.width, this.height);
         this.scene = new THREE.Scene();
 

@@ -30,10 +30,21 @@ var ShipObject = Class(function(pool) {
 
         this.x = p.x;
         this.y = p.y;
-        this.angle = 0;
+        this.angle = toRadian(p.angle || 0); // clockwise with 0 pointing up
 
-        this.scaleX = (p.scaleX || 5);
-        this.scaleY = (p.scaleY || 1);
+        this.ox = p.x;
+        this.oy = p.y;
+        this.oAngle = this.angle;
+
+        this.size = {
+            x: this.mesh.size * (p.scaleX || 5),
+            y: this.mesh.size * (p.scaleY || 5)
+        };
+
+        this.boundSize = {
+            x: this.size.x * 2,
+            y: this.size.y * 2
+        };
 
         Super.create(t, p);
 

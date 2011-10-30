@@ -24,7 +24,7 @@ var PoolObject = Class(function(pool) {
 
 }, {
 
-    create: function(t, params) {
+    create: function(t, p) {
     },
 
     update: function(t) {
@@ -58,10 +58,13 @@ var ObjectPool = Class(function(game, max, type) {
 
         // Create new instances on the fly
         if (this.used === this.created && this.created < this.max) {
+
             var o = new this.type(this);
+
             this.objects.push(o);
+
             this.created++;
-            o.id = this.created;
+
         }
 
         for(var i = 0, l = this.created; i < l; i++) {
@@ -72,8 +75,9 @@ var ObjectPool = Class(function(game, max, type) {
                 this.used++;
                 obj._used = true;
                 obj._destroyed = false;
+                obj._time = this.time;
 
-                obj.create(this.time, params);
+                obj.create(0, params);
                 this.active.push(obj);
 
                 return obj;
@@ -93,7 +97,7 @@ var ObjectPool = Class(function(game, max, type) {
 
             var obj = this.active[i];
             if (!obj._destroyed) {
-                obj.update(t);
+                obj.update(this.time - obj._time);
             }
 
             if (obj._destroyed) {

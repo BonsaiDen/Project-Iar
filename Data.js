@@ -164,53 +164,13 @@ var BulletComboTypes = {
 
             at: 0,
             type: 'ray',
-            r: ['r', -90, 0],
+            r: ['r', -45, -45],
             dr: 0,
-            di: 0
-
-        }, {
-
-            at: 0,
-            type: 'ray',
-            r: ['r', 0, 90],
-            dr: 0,
-            di: 0
-
-        }, {
-
-            at: 0,
-            type: 'ray',
-            r: ['r', -90, 0],
-            dr: 0,
-            di: 0
-
-        }, {
-
-            at: 0,
-            type: 'ray',
-            r: ['r', 0, 90],
-            dr: 0,
-            di: 0
-
-        }, {
-
-            at: 0,
-            type: 'ray',
-            r: ['r', -90, 0],
-            dr: 0,
-            di: 0
-
-        }, {
-
-            at: 0,
-            type: 'ray',
-            r: ['r', 0, 90],
-            dr: 0, // Use X / Y offsets and calculate from that
             di: 0
 
         }],
 
-        interval: 24
+        interval: 250
 
     }
 

@@ -33,10 +33,20 @@ var MeshObject = Class(function(pool) {
 
         this.mesh.position.x = this.x;
         this.mesh.position.y = this.y;
-        this.mesh.scale.x = this.scaleX;
-        this.mesh.scale.y = this.scaleY;
+        this.mesh.scale.x = this.size.x / this.mesh.size;
+        this.mesh.scale.y = this.size.y / this.mesh.size;
 
         this.scene.add(this.mesh);
+
+    },
+
+    update: function(t) {
+
+        this.mesh.position.x = this.x;
+        this.mesh.position.y = this.y;
+        this.mesh.rotation.z = this.angle;
+
+        Super.update(t);
 
     },
 

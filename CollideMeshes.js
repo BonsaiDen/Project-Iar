@@ -34,8 +34,8 @@ var CollideMeshObject = Class(function(pool) {
 
     create: function(t, p) {
 
-        Super.create(t)
-        this.obb.setSize(this.mesh.size * this.scaleX, this.mesh.size * this.scaleY)
+        Super.create(t);
+        this.obb.setSize(this.size.x, this.size.y);
 
         if (DEBUG) {
             this.scene.add(this.circle);
@@ -48,12 +48,14 @@ var CollideMeshObject = Class(function(pool) {
 
     update: function(t) {
 
-        this.obb.transform(this.mesh.position.x, this.mesh.position.y, this.mesh.rotation.z);
+        this.obb.transform(this.x, this.y, this.angle);
 
         if (DEBUG) {
-            this.circle.position.x = this.mesh.position.x;
-            this.circle.position.y = this.mesh.position.y;
+            this.circle.position.x = this.x;
+            this.circle.position.y = this.y;
         }
+
+        Super.update(t);
 
     },
 
@@ -256,7 +258,9 @@ OBB.prototype = {
         dx *= dx;
         dy *= dy;
 
-        var rr = this.radius * other.radius;
+        var rr = this.radius + other.radius;
+        rr *= rr;
+
         if (dx + dy <= rr) {
 
             if (this.invalidAxis) {
