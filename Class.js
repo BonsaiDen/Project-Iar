@@ -19,52 +19,142 @@
   */
 
 
+
+
 /**
   *  EVAL patching Classes supporting fast Super() calls
   *  this keeps the code a lot cleaner and faster than it would be without this magic
   */
-function Class(ctor, methods, base) {
 
-    var level = (base && base.__level || 0) + 1;
-    if (ctor.toString().indexOf('Super') !== -1) {
-        ctor = eval('(' + ctor.toString().replace(/Super/g, 'this.Super_' + level) + ')');
+function Class(base, props) {
+
+    if (typeof base !== 'function') {
+        props = base;
+        base = null;
     }
 
-    ctor.__constructor = ctor;
-    ctor.__level = level;
-
-    // Map base super
-    methods['Super_' + level] = base ? base.__constructor : null;
-
-    // Add methods and patch in super calls
+    var level = 0;
     if (base) {
 
-        for(var i in base.prototype) {
+        level = base.$$level + 1;
 
-            if (base.prototype.hasOwnProperty(i)) {
+        // Patch in required super calls
+        for(var i in props) {
 
-                if (methods.hasOwnProperty(i)) {
+            if (props.hasOwnProperty(i) && typeof props[i] === 'function') {
 
-                    var sup = 'super' + level + '_';
-                    methods[sup + i]  = base.prototype[i];
+                var code = props[i].toString(),
+                    superMethod = /\WSuper\./.test(code),
+                    superCtor = /\WSuper\(/.test(code);
 
-                    if (methods[i].toString().indexOf('Super.') !== -1) {
-                        methods[i] = eval('(' + methods[i].toString().replace(/Super\./g, 'this.' + sup) + ')');
-                    }
+                if (superMethod || superCtor) {
 
-                } else {
-                    methods[i] = base.prototype[i];
+                    code = code.replace(/\WSuper\./g, 'this.$$$$_super_' + level + '_');
+                    code = code.replace(/\WSuper\(/g, 'this.$$$$_super_' + level + '_constructor(');
+
+                    props[i] = eval('(' + code +')');
+
                 }
 
             }
+
         }
 
-    } else {
-        ctor.__level = 0;
     }
 
-    ctor.prototype = methods;
+    // We assign this here so that we don't inherit constructors
+    // Which would break alot of stuff
+    var ctor;
+    if (props.hasOwnProperty('constructor') && typeof props.constructor === 'function') {
+        ctor = props.constructor;
+
+    } else {
+        ctor = function() {};
+    }
+
+    ctor.$$level = level;
+
+    if (base) {
+
+        // Iterate over the base class and check for "super" methods
+        for(var i in base.prototype) {
+
+            if (i.substr(0, 3) !== '$$_') {
+
+                if (base.prototype.hasOwnProperty(i)) {
+                    props['$$_super_' + level + '_' + i] = base.prototype[i];
+                }
+
+            }
+
+                if (!props.hasOwnProperty(i)) {
+                    props[i] = base.prototype[i];
+                }
+
+
+        }
+
+    }
+
+    ctor.prototype = props;
+
     return ctor;
 
 }
+
+
+//function Class(ctor, methods, base) {
+//
+//    var level = (base && base.__level || 0) + 1;
+//    if (ctor.toString().indexOf('Super') !== -1) {
+//        ctor = eval('(' + ctor.toString().replace(/Super/g, 'this.Super_' + level) + ')');
+//    }
+//
+//    ctor.__constructor = ctor;
+//    ctor.__level = level;
+//
+//    // Map base super
+//    methods['Super_' + level] = base ? base.__constructor : null;
+//
+//    // Add methods and patch in super calls
+//    if (base) {
+//
+//        for(var i in base.prototype) {
+//
+//            if (base.prototype.hasOwnProperty(i)) {
+//
+//                if (methods.hasOwnProperty(i)) {
+//
+//                    var sup = 'super' + level + '_';
+//                    methods[sup + i]  = base.prototype[i];
+//
+//                    if (methods[i].toString().indexOf('Super.') !== -1) {
+//                        methods[i] = eval('(' + methods[i].toString().replace(/Super\./g, 'this.' + sup) + ')');
+//                    }
+//
+//                } else {
+//                    methods[i] = base.prototype[i];
+//                }
+//
+//            }
+//        }
+//
+//    } else {
+//        ctor.__level = 0;
+//    }
+//
+//    ctor.prototype = methods;
+//    return ctor;
+//
+//}
+//
+//var Kitten = Class(function() {
+//
+//
+//}, {
+//
+//
+//
+//});
+
 

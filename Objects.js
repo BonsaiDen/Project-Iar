@@ -20,9 +20,7 @@
 
 // Object --------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var PoolObject = Class(function(pool) {
-
-}, {
+var PoolObject = Class({
 
     create: function(t, p) {
     },
@@ -36,23 +34,42 @@ var PoolObject = Class(function(pool) {
 
 });
 
+var PositionedObject = Class(PoolObject, {
+
+    create: function(t, p) {
+
+        // @inline
+        this.x = p.x;
+        this.y = p.y;
+        this.angle = toRadian(p.angle || 0); // clockwise with 0 pointing up
+
+        this.ox = p.x;
+        this.oy = p.y;
+        this.oAngle = this.angle;
+
+    }
+
+});
+
 
 // Pool ----------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var ObjectPool = Class(function(game, max, type) {
+var ObjectPool = Class({
 
-    this.game = game;
-    this.type = type;
-    this.time = 0;
+    constructor: function(game, max, type) {
 
-    this.max = max;
-    this.used = 0;
-    this.created = 0;
+        this.game = game;
+        this.type = type;
+        this.time = 0;
 
-    this.objects = [];
-    this.active = [];
+        this.max = max;
+        this.used = 0;
+        this.created = 0;
 
-}, {
+        this.objects = [];
+        this.active = [];
+
+    },
 
     create: function(params) {
 
@@ -92,7 +109,6 @@ var ObjectPool = Class(function(game, max, type) {
 
         this.time = t;
 
-        var removed = [];
         for(var i = 0, l = this.active.length; i < l; i++) {
 
             var obj = this.active[i];
@@ -109,6 +125,16 @@ var ObjectPool = Class(function(game, max, type) {
             }
 
         }
+
+    },
+
+    destroy: function() {
+
+        for(var i = 0, l = this.active.length; i < l; i++) {
+            this.active[i].destroy(this.time);
+        }
+
+        this.active = [];
 
     },
 

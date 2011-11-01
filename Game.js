@@ -18,7 +18,7 @@
   * Project Iar. If not, see <http://www.gnu.org/licenses/>.
   */
 
-var DEBUG = true;
+var DEBUG = false;
 
 function Game() {
 
@@ -66,6 +66,12 @@ Game.prototype = {
         this.initPools();
         this.playerCombos.create('rays', 0, 300);
         this.enemies.create('player', 0, 500);
+
+        this.enemies.create('player', 100, 550);
+
+        this.enemies.create('player', -50, 450);
+        this.enemies.create('player', -70, 470);
+        this.enemies.create('player', -90, 420);
 
     },
 

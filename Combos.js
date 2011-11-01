@@ -20,12 +20,14 @@
 
 // Object --------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var ComboObject = Class(function(pool) {
+var ComboObject = Class(PoolObject, {
 
-    this.game = pool.game;
-    this.bulletPool = pool.bulletPool;
+    constructor: function(pool) {
 
-}, {
+        this.game = pool.game;
+        this.bulletPool = pool.bulletPool;
+
+    },
 
     create: function(t, p) {
 
@@ -115,18 +117,19 @@ var ComboObject = Class(function(pool) {
 
     }
 
-
-}, PoolObject);
+});
 
 
 // Pool ----------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var ComboPool = Class(function(game, max, bulletPool) {
+var ComboPool = Class(ObjectPool, {
 
-    Super(game, max, ComboObject);
-    this.bulletPool = bulletPool;
+    constructor: function(game, max, bulletPool) {
 
-}, {
+        Super(game, max, ComboObject);
+        this.bulletPool = bulletPool;
+
+    },
 
     create: function(type, x, y, speed, r, dr, di) {
 
@@ -147,5 +150,5 @@ var ComboPool = Class(function(game, max, bulletPool) {
 
     }
 
-}, ObjectPool);
+});
 

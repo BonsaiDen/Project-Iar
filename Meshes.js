@@ -21,15 +21,29 @@
 
 // Object --------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var MeshObject = Class(function(pool) {
+var MeshObject = Class(PositionedObject, {
 
-    this.mesh = new THREE.Mesh(pool.meshPlane, pool.meshMaterial)
-    this.mesh.size = pool.meshSize;
-    this.scene = pool.scene;
+    constructor: function(pool) {
 
-}, {
+        this.mesh = new THREE.Mesh(pool.meshPlane, pool.meshMaterial)
+        this.mesh.size = pool.meshSize;
+        this.scene = pool.scene;
 
-    create: function(t, params) {
+    },
+
+    create: function(t, p) {
+
+        Super.create(t, p);
+
+        this.size = {
+            x: this.mesh.size * (p.scaleX || 1),
+            y: this.mesh.size * (p.scaleY || 1)
+        };
+
+        this.boundSize = {
+            x: this.size.x * 2,
+            y: this.size.y * 2
+        };
 
         this.mesh.position.x = this.x;
         this.mesh.position.y = this.y;
@@ -46,34 +60,34 @@ var MeshObject = Class(function(pool) {
         this.mesh.position.y = this.y;
         this.mesh.rotation.z = this.angle;
 
-        Super.update(t);
-
     },
 
     destroy: function(t) {
-        this.scene.remove(this.mesh);
         Super.destroy(t);
+        this.scene.remove(this.mesh);
     }
 
-}, PoolObject);
+});
 
 
 // Pool ----------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var MeshPool = Class(function(game, max, type, size, material) {
+var MeshPool = Class(ObjectPool, {
 
-    Super(game, max, type);
+    constructor: function(game, max, type, size, material) {
 
-    this.meshMaterial = material || new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        wireframe: true
-    });
+        Super(game, max, type);
 
-    this.meshPlane = new THREE.PlaneGeometry(size, size);
-    this.meshSize = size;
-    this.scene = game.scene;
+        this.meshMaterial = material || new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+        });
 
-}, {
+        this.meshPlane = new THREE.PlaneGeometry(size, size);
+        this.meshSize = size;
+        this.scene = game.scene;
 
-}, ObjectPool);
+    }
+
+});
 

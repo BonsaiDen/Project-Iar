@@ -21,20 +21,22 @@
 
 // Object --------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var CollideMeshObject = Class(function(pool) {
+var CollideMeshObject = Class(MeshObject, {
 
-    Super(pool);
-    this.obb = new OBB();
+    constructor: function(pool) {
 
-    if (DEBUG) {
-        this.circle = new THREE.Mesh(pool.meshCircle, pool.circleMaterial)
-    }
+        Super(pool);
+        this.obb = new OBB();
 
-}, {
+        if (DEBUG) {
+            this.circle = new THREE.Mesh(pool.meshCircle, pool.circleMaterial)
+        }
+
+    },
 
     create: function(t, p) {
 
-        Super.create(t);
+        Super.create(t, p);
         this.obb.setSize(this.size.x, this.size.y);
 
         if (DEBUG) {
@@ -48,6 +50,8 @@ var CollideMeshObject = Class(function(pool) {
 
     update: function(t) {
 
+        Super.update(t);
+
         this.obb.transform(this.x, this.y, this.angle);
 
         if (DEBUG) {
@@ -55,53 +59,57 @@ var CollideMeshObject = Class(function(pool) {
             this.circle.position.y = this.y;
         }
 
-        Super.update(t);
-
     },
 
     collision: function(t, other) {
     },
 
+    lineCollision: function(a, b) {
+        return this.obb.intersectLine(a, b);
+    },
+
     destroy: function(t) {
+
+        Super.destroy(t);
 
         if (DEBUG) {
             this.scene.remove(this.circle);
         }
 
-        Super.destroy(t);
-
     }
 
-}, MeshObject);
+});
 
 
 // Pool ----------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var CollideMeshPool = Class(function(game, max, type, size, material) {
+var CollideMeshPool = Class(MeshPool, {
 
-    Super(game, max, type);
+    constructor: function(game, max, type, size, material) {
 
-    this.meshMaterial = material || new THREE.MeshBasicMaterial({
-        color: 0x0000ff,
-        wireframe: true
-    });
+        Super(game, max, type);
 
-    this.meshPlane = new THREE.PlaneGeometry(size, size);
-    this.meshSize = size;
-    this.scene = game.scene;
-
-    if (DEBUG) {
-
-        this.circleMaterial = new THREE.MeshBasicMaterial({
-            color: 0x000000,
+        this.meshMaterial = material || new THREE.MeshBasicMaterial({
+            color: 0x0000ff,
             wireframe: true
         });
 
-        this.meshCircle = new THREE.SphereGeometry(1, 4, 4);
+        this.meshPlane = new THREE.PlaneGeometry(size, size);
+        this.meshSize = size;
+        this.scene = game.scene;
 
-    }
+        if (DEBUG) {
 
-}, {
+            this.circleMaterial = new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                wireframe: true
+            });
+
+            this.meshCircle = new THREE.SphereGeometry(1, 4, 4);
+
+        }
+
+    },
 
     collide: function(otherPool) {
 
@@ -110,11 +118,14 @@ var CollideMeshPool = Class(function(game, max, type, size, material) {
 
         for(var i = 0, l = a.length; i < l; i++) {
 
+            var ao = a[i];
             for(var e = 0, el = b.length; e < el; e++) {
 
-                if (a[i].obb.overlaps(b[e].obb)) {
-                    a[i].collision(this.time, b[e]);
-                    b[e].collision(this.time, a[i]);
+                var bo = b[e];
+
+                if (ao.obb.overlaps(bo.obb)) {
+                    ao.collision(this.time, bo);
+                    bo.collision(this.time, ao);
                 }
 
             }
@@ -123,7 +134,7 @@ var CollideMeshPool = Class(function(game, max, type, size, material) {
 
     }
 
-}, MeshPool);
+});
 
 
 // Collision Detection -------------------------------------------------------
@@ -146,10 +157,11 @@ OBB.prototype = {
 
     setSize: function(w, h) {
 
+        // TODO Tweak this later :)
         this.w = w / 2;
         this.h = h / 2;
         this.invalidAxis = true;
-        this.radius = (Math.max(w, h) + Math.abs(w - h)) * 1.84;
+        this.radius = Math.max(w, h) * 1.5;
 
     },
 
@@ -277,7 +289,90 @@ OBB.prototype = {
             return false;
         }
 
+    },
+
+    intersectLine: function(la, lb) {
+
+        if (this.invalidAxis) {
+            this.computeAxis();
+        }
+
+        var t = tMin = 10000000, intersects = false;
+        for(var c = 0; c < 4; ++c) {
+
+            var a = this.corner[c],
+                b = this.corner[c < 3 ? c + 1 : 0]
+
+            // Get the intersection distance
+            var t = intersectSegment(la, lb, a, b);
+
+            if (t !== -1) {
+
+                intersects = true;
+
+                if (t < tMin) {
+                    tMin = t;
+                }
+
+            }
+
+        }
+
+        if (intersects) {
+            return tMin;
+
+        } else {
+            return -1;
+        }
+
     }
 
 };
+
+function triangleArea(a, b, c) {
+    return (a[0] - c[0] ) * (c[1] - b[1]) - (c[1] - a[1]) * (b[0] - c[0]);
+}
+
+function intersectPoint(a, b, c, d) {
+
+    var B = [b[0] - a[0], b[1] - a[1]],
+        C = [c[0] - a[0], c[1] - a[1]],
+        D = [d[0] - a[0], d[1] - a[1]];
+
+    var distAB = Math.sqrt(B[0] * B[0] + B[1] * B[1]);
+
+    var cos = B[0] / distAB,
+        sin = B[1] / distAB;
+
+    var newX = C[0] * cos + C[1] * sin;
+    C[1] = C[1] * cos - C[0] * sin;
+    C[0] = newX;
+
+    var newX = D[0] * cos + D[1] * sin;
+    D[1] = D[1] * cos - D[0] * sin;
+    D[0] = newX;
+
+    return D[0] + (C[0] - D[0]) * D[1] / (D[1] - C[1]);
+
+};
+
+function intersectSegment(a, b, c, d) {
+
+    var a1 = triangleArea(a, b, d),
+        a2 = triangleArea(a, b, c);
+
+    if (a1 * a2 < 0) {
+
+        var a3 = triangleArea(c, d, a),
+            a4 = a3 + a2 - a1;
+
+        if (a3 * a4 < 0) {
+            return intersectPoint(a, b, c, d);
+        }
+
+    }
+
+    return -1;
+
+}
 

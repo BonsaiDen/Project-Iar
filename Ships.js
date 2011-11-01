@@ -21,65 +21,51 @@
 
 // Object --------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var ShipObject = Class(function(pool) {
-    Super(pool);
+var ShipObject = Class(CollideMeshObject, {
 
-}, {
+    constructor: function(pool) {
+        Super(pool);
+    },
 
     create: function(t, p) {
-
-        this.x = p.x;
-        this.y = p.y;
-        this.angle = toRadian(p.angle || 0); // clockwise with 0 pointing up
-
-        this.ox = p.x;
-        this.oy = p.y;
-        this.oAngle = this.angle;
-
-        this.size = {
-            x: this.mesh.size * (p.scaleX || 5),
-            y: this.mesh.size * (p.scaleY || 5)
-        };
-
-        this.boundSize = {
-            x: this.size.x * 2,
-            y: this.size.y * 2
-        };
-
         Super.create(t, p);
-
     },
 
     update: function(t) {
+
         Super.update(t);
+        this.lineCollision([0, 0], [0, 700]);
     },
 
     destroy: function(t) {
         Super.remove(t);
     }
 
-}, CollideMeshObject);
+});
 
 
 // Pool ----------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var ShipPool = Class(function(game, max) {
+var ShipPool = Class(CollideMeshPool, {
 
-    Super(game, max, ShipObject, 40, new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: true
-    }));
+    constructor: function(game, max) {
 
-}, {
+        Super(game, max, ShipObject, 40, new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            wireframe: false
+        }));
+
+    },
 
     create: function(type, x, y) {
 
         Super.create({
             x: x,
-            y: y
+            y: y,
+            angle: Math.random() * 360
         });
 
     }
 
-}, CollideMeshPool);
+});
 

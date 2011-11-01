@@ -1,37 +1,20 @@
 // Object --------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var BulletObject = Class(function(pool) {
+var BulletObject = Class(CollideMeshObject, {
 
-    Super(pool);
-    this.rect = pool.rect;
+    constructor: function(pool) {
 
-}, {
+        Super(pool);
+        this.rect = pool.rect;
+
+    },
 
     create: function(t, p) {
 
-        // Move this into another class
-        this.x = p.x;
-        this.y = p.y;
-        this.angle = toRadian(p.angle || 0); // clockwise with 0 pointing up
-
-        this.ox = p.x;
-        this.oy = p.y;
-        this.oAngle = this.angle;
+        Super.create(t, p);
 
         this.speed = (p.speed || 0) / 100; // determine a meaningful scale
         this.rps = p.rps ? p.rps * (Math.PI * 2 / 1000) : 0;
-
-        this.size = {
-            x: this.mesh.size * (p.scaleX || 1),
-            y: this.mesh.size * (p.scaleY || 1)
-        };
-
-        this.boundSize = {
-            x: this.size.x * 2,
-            y: this.size.y * 2
-        };
-
-        Super.create(t, p);
 
     },
 
@@ -67,21 +50,23 @@ var BulletObject = Class(function(pool) {
         Super.destroy(t);
     }
 
-}, CollideMeshObject);
+});
 
 
 // Pool ----------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var BulletPool = Class(function(game, max) {
+var BulletPool = Class(CollideMeshPool, {
 
-    Super(game, max, BulletObject, 10, new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        wireframe: true
-    }));
+    constructor: function(game, max) {
 
-    this.rect = game.rect;
+        Super(game, max, BulletObject, 10, new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: false
+        }));
 
-}, {
+        this.rect = game.rect;
+
+    },
 
     create: function(type, x, y, speed, angle, dr, di) {
 
@@ -105,5 +90,5 @@ var BulletPool = Class(function(game, max) {
 
     }
 
-}, CollideMeshPool);
+});
 
