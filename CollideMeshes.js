@@ -29,7 +29,8 @@ var CollideMeshObject = Class(MeshObject, {
         this.obb = new OBB();
 
         if (DEBUG) {
-            this.circle = new THREE.Mesh(pool.meshCircle, pool.circleMaterial)
+            this.circle = new THREE.Mesh(pool.meshCircle, pool.circleMaterial);
+            this.box = new THREE.Mesh(pool.meshPlane, pool.boxMaterial);
         }
 
     },
@@ -37,14 +38,36 @@ var CollideMeshObject = Class(MeshObject, {
     create: function(t, p) {
 
         Super.create(t, p);
-        this.obb.setSize(this.size.x, this.size.y);
+        this.updateSize();
+
+        // Correction times for fast moving objects
+        this.lastTime = t;
+        this.timeDiff = 0;
 
         if (DEBUG) {
             this.scene.add(this.circle);
+            this.scene.add(this.box);
+        }
+
+    },
+
+    updateSize: function() {
+
+        this.obb.setSize(this.size.x, this.size.y);
+
+        // Make sure to update right away
+        this.obb.transform(this.x, this.y, -this.angle);
+
+        if (DEBUG) {
             this.circle.scale.x = this.obb.radius / 2;
             this.circle.scale.y = this.obb.radius / 2;
-            this.circle.position.z = 0;
+            this.circle.position.z = -2;
+            this.box.scale.x = this.size.x / this.mesh.size;
+            this.box.scale.y = this.size.y / this.mesh.size;
+            this.box.position.z = -1;
         }
+
+        Super.updateSize();
 
     },
 
@@ -52,20 +75,54 @@ var CollideMeshObject = Class(MeshObject, {
 
         Super.update(t);
 
-        this.obb.transform(this.x, this.y, this.angle);
+        // Do a lot of stuff to adjust the OBB based on the object's speed
+        // (this extends the OBB *behind* the object so that it matches up with the speed)
+        var td = t - this.lastTime;
+        this.lastTime = t;
 
+        // Only adjust obb scaling in case we move more than size.y
+        var v = (this.speed * td) - this.size.y;
+        if (v > this.size.y) {
+
+            var dx = Math.sin(this.angle) * v * 0.5,
+                dy = Math.cos(this.angle) * v * 0.5;
+
+            // This extrudes the OBB with the inverted velocity of the object
+            if (td !== this.timeDiff) {
+
+                this.timeDiff = td;
+                this.obb.setSize(this.size.x, this.size.y + v);
+
+                // Adjust the bounding circle
+                if (DEBUG) {
+                    this.circle.scale.x = this.obb.radius / 2;
+                    this.circle.scale.y = this.obb.radius / 2;
+                    this.box.scale.y = (this.size.y + v) / this.mesh.size;
+                }
+
+            }
+
+            this.obb.transform(this.x - dx, this.y - dy, -this.angle);
+
+        } else {
+            this.obb.transform(this.x, this.y, -this.angle);
+        }
+
+        // Adjust positions of bounding things
         if (DEBUG) {
-            this.circle.position.x = this.x;
-            this.circle.position.y = this.y;
+            this.circle.position.x = this.obb.x;
+            this.circle.position.y = this.obb.y;
+            this.box.position.x = this.obb.x;
+            this.box.position.y = this.obb.y;
+            this.box.rotation.z = this.mesh.rotation.z;
         }
 
     },
 
-    collision: function(t, other) {
+    obbCollision: function(t, other) {
     },
 
-    lineCollision: function(a, b) {
-        return this.obb.intersectLine(a, b);
+    lineCollision: function(dist, other) {
     },
 
     destroy: function(t) {
@@ -74,6 +131,7 @@ var CollideMeshObject = Class(MeshObject, {
 
         if (DEBUG) {
             this.scene.remove(this.circle);
+            this.scene.remove(this.box);
         }
 
     }
@@ -90,8 +148,8 @@ var CollideMeshPool = Class(MeshPool, {
         Super(game, max, type);
 
         this.meshMaterial = material || new THREE.MeshBasicMaterial({
-            color: 0x0000ff,
-            wireframe: true
+            color: 0xffffff,
+            wireframe: false
         });
 
         this.meshPlane = new THREE.PlaneGeometry(size, size);
@@ -103,6 +161,12 @@ var CollideMeshPool = Class(MeshPool, {
             this.circleMaterial = new THREE.MeshBasicMaterial({
                 color: 0x000000,
                 wireframe: true
+            });
+
+            this.boxMaterial = new THREE.MeshBasicMaterial({
+                color: 0x0000ff,
+                wireframe: true,
+                wireframeLinewidth: 3
             });
 
             this.meshCircle = new THREE.SphereGeometry(1, 4, 4);
@@ -124,8 +188,35 @@ var CollideMeshPool = Class(MeshPool, {
                 var bo = b[e];
 
                 if (ao.obb.overlaps(bo.obb)) {
-                    ao.collision(this.time, bo);
-                    bo.collision(this.time, ao);
+                    ao.obbCollision(this.time, bo);
+                    bo.obbCollision(this.time, ao);
+                }
+
+            }
+
+        }
+
+    },
+
+    // Collide all objects in this pool with a line based on there Y size and angle
+    // with the OBBs in another pool
+    // the collision with the minimum distance is then provided to the collisionLine method of the object within this pool
+    collideLines: function(otherPool) {
+
+        var a = this.getActive(),
+            b = otherPool.getActive();
+
+        for(var i = 0, l = a.length; i < l; i++) {
+
+            var ao = a[i];
+            for(var e = 0, el = b.length; e < el; e++) {
+
+                var bo = b[e];
+
+                // Use the original point where the laser starts, not the current object location
+                var dist = ao.obb.overlapsLine(bo.obb, ao.ox, ao.oy, ao.angle, ao.length);
+                if (dist !== -1) {
+                    ao.lineCollision(dist, bo);
                 }
 
             }
@@ -146,6 +237,7 @@ function OBB() {
     this.axis = [];
     this.origin = [];
     this.invalidAxis = true;
+    this.invalidSize = true;
 
     this.x = 0;
     this.y = 0;
@@ -161,6 +253,7 @@ OBB.prototype = {
         this.w = w / 2;
         this.h = h / 2;
         this.invalidAxis = true;
+        this.invalidSize = true;
         this.radius = Math.max(w, h) * 1.5;
 
     },
@@ -226,7 +319,7 @@ OBB.prototype = {
 
     transform: function(x, y, angle) {
 
-        if (angle !== this.angle) {
+        if (angle !== this.angle || this.invalidSize) {
 
             var Xx =  Math.cos(angle) * this.w, Xy = Math.sin(angle) * this.w,
                 Yx = -Math.sin(angle) * this.h, Yy = Math.cos(angle) * this.h;
@@ -241,6 +334,7 @@ OBB.prototype = {
             this.x = x;
             this.y = y;
             this.invalidAxis = true;
+            this.invalidSize = false;
 
         } else if (this.x !== x || this.y !== y) {
 
@@ -291,7 +385,16 @@ OBB.prototype = {
 
     },
 
-    intersectLine: function(la, lb) {
+    overlapsLine: function(other, x, y, angle, length) {
+
+        var ex = Math.sin(angle) * length,
+            ey = Math.cos(angle) * length;
+
+        return other.intersectLinePoints([x, y], [x + ex, y + ey]);
+
+    },
+
+    intersectLinePoints: function(la, lb) {
 
         if (this.invalidAxis) {
             this.computeAxis();
@@ -335,26 +438,38 @@ function triangleArea(a, b, c) {
 
 function intersectPoint(a, b, c, d) {
 
-    var B = [b[0] - a[0], b[1] - a[1]],
-        C = [c[0] - a[0], c[1] - a[1]],
-        D = [d[0] - a[0], d[1] - a[1]];
+    var bx = b[0] - a[0],
+        by = b[1] - a[1],
 
-    var distAB = Math.sqrt(B[0] * B[0] + B[1] * B[1]);
+        cx = c[0] - a[0],
+        cy = c[1] - a[1],
 
-    var cos = B[0] / distAB,
-        sin = B[1] / distAB;
+        dx = d[0] - a[0],
+        dy = d[1] - a[1];
 
-    var newX = C[0] * cos + C[1] * sin;
-    C[1] = C[1] * cos - C[0] * sin;
-    C[0] = newX;
+    var distAB = Math.sqrt(bx * bx + by * by);
 
-    var newX = D[0] * cos + D[1] * sin;
-    D[1] = D[1] * cos - D[0] * sin;
-    D[0] = newX;
+    var cos = bx / distAB,
+        sin = by / distAB;
 
-    return D[0] + (C[0] - D[0]) * D[1] / (D[1] - C[1]);
+    var newX = cx * cos + cy * sin;
+    cy = cy * cos - cx * sin;
+    cx = newX;
+
+    var newX = dx * cos + dy * sin;
+    dy = dy * cos - dx * sin;
+    dx = newX;
+
+    var ABpos = dx + (cx - dx) * dy / (dy - cy);
+
+    if (ABpos < 0 || ABpos > distAB) {
+        return -1;
+    }
+
+    return ABpos;
 
 };
+
 
 function intersectSegment(a, b, c, d) {
 
@@ -376,3 +491,75 @@ function intersectSegment(a, b, c, d) {
 
 }
 
+
+//console.log(intersectSegment([0, 0], [100, 0], [50, 10], [50, -5]))
+
+//function eucd(dx, dy) {
+//
+//    if (dx < 0) {
+//        dx = -dx;
+//    }
+//
+//    if (dy < 0) {
+//        dy = -dy;
+//    }
+//
+//    var min, max;
+//    if (dx < dy) {
+//        min = dx;
+//        max = dy;
+//
+//    } else {
+//        min = dy;
+//        max = dx;
+//    }
+//
+//    // coefficients equivalent to ( 123/128 * max ) and ( 51/128 * min )
+//    return ((( max << 8 ) + ( max << 3 ) - ( max << 4 ) - ( max << 1 ) +
+//             ( min << 7 ) - ( min << 5 ) + ( min << 3 ) - ( min << 1 )) >> 8 );
+//
+//}
+//
+//
+//function eucd2(dx, dy) {
+//
+//    if (dx < 0) {
+//        dx = -dx;
+//    }
+//
+//    if (dy < 0) {
+//        dy = -dy;
+//    }
+//
+//    var min, max;
+//    if (dx < dy) {
+//       min = dx;
+//       max = dy;
+//
+//    } else {
+//       min = dy;
+//       max = dx;
+//    }
+//
+//    var approx = (max * 1007) + (min * 441);
+//    if (max < (min << 4)) {
+//       approx -= (max * 40);
+//    }
+//
+//    console.log(approx);
+//    // add 512 for proper rounding
+//    return ((approx + 512) >> 10);
+//}
+//
+//for(var i = 0; i < 100; i++) {
+//
+//    var d = Math.sqrt(10 * 10 + i * i),
+//        b = eucd(10, i),
+//        c = eucd2(10, i);
+//
+//    console.log(d - b, d - c);
+//
+//}
+//
+//
+//

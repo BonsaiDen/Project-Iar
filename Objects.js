@@ -47,6 +47,9 @@ var PositionedObject = Class(PoolObject, {
         this.oy = p.y;
         this.oAngle = this.angle;
 
+        this.speed = this.speed || 0;
+        this.vx = Math.sin(this.angle) * this.speed;
+        this.vy = Math.cos(this.angle) * this.speed;
     }
 
 });

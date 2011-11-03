@@ -18,7 +18,7 @@
   * Project Iar. If not, see <http://www.gnu.org/licenses/>.
   */
 
-var DEBUG = false;
+var DEBUG = true;
 
 function Game() {
 
@@ -73,6 +73,8 @@ Game.prototype = {
         this.enemies.create('player', -70, 470);
         this.enemies.create('player', -90, 420);
 
+        this.playerLasers.create('foo', 0, 300, -15, 300);
+
     },
 
     initPools: function() {
@@ -82,6 +84,9 @@ Game.prototype = {
 
         this.playerBullets = new BulletPool(this, 500);
         this.enemyBullets = new BulletPool(this, 500);
+
+        this.playerLasers = new LaserPool(this, 20);
+        this.enemyLasers = new LaserPool(this, 20);
 
         this.playerCombos = new ComboPool(this, 10, this.playerBullets);
         this.enemyCombos = new ComboPool(this, 50, this.enemyBullets);
@@ -170,21 +175,8 @@ Game.prototype = {
             // Ensure that throttling of intervals and other things does not effect framerate
             this.browserTime += now - this.lastUpdate;
             while(this.gameTime < this.browserTime) {
-
                 this.gameTime += this.tick;
-
-                var before = Date.now();
-//                this.player.update(this.gameTime);
-                this.playerCombos.update(this.gameTime);
-                this.playerBullets.update(this.gameTime);
-
-                this.enemies.update(this.gameTime);
-//                this.enemyCombos.update(this.gameTime);
-//                this.enemyBullets.update(this.gameTime);
-
-                this.enemies.collide(this.playerBullets);
-                this.upateTook = Date.now() - before;
-
+                this.updateFrame();
             }
 
         }
@@ -197,7 +189,38 @@ Game.prototype = {
 
     },
 
+    updateFrame: function() {
+
+        var before = Date.now();
+        this.player.update(this.gameTime);
+        this.playerCombos.update(this.gameTime);
+        this.playerBullets.update(this.gameTime);
+
+        this.playerLasers.collideLines(this.enemies);
+        this.playerLasers.update(this.gameTime);
+
+        this.enemies.update(this.gameTime);
+        this.enemyCombos.update(this.gameTime);
+        this.enemyBullets.update(this.gameTime);
+
+        this.player.collide(this.enemyBullets);
+        this.enemies.collide(this.playerBullets);
+
+        this.upateTook = Date.now() - before;
+
+    },
+
     renderLoop: function() {
+    },
+
+    step: function(frames) {
+
+        frames = frames || 1;
+        for(var i = 0; i < frames; i++) {
+            this.gameTime += this.tick;
+            this.updateFrame();
+        }
+
     }
 
 };

@@ -11,21 +11,18 @@ var BulletObject = Class(CollideMeshObject, {
 
     create: function(t, p) {
 
-        Super.create(t, p);
-
         this.speed = (p.speed || 0) / 100; // determine a meaningful scale
         this.rps = p.rps ? p.rps * (Math.PI * 2 / 1000) : 0;
+
+        Super.create(t, p);
 
     },
 
     update: function(t) {
 
         // Calculate position and other values based on passed time
-        var dx = Math.sin(this.oAngle) * this.speed * t,
-            dy = Math.cos(this.oAngle) * this.speed * t;
-
-        this.x = this.ox + dx,
-        this.y = this.oy + dy;
+        this.x = this.ox + this.vx * t;
+        this.y = this.oy + this.vy * t;
 
         // Out of bounds check
         var b = this.boundSize;
@@ -36,13 +33,13 @@ var BulletObject = Class(CollideMeshObject, {
 
         }
 
-        this.angle = -(this.oAngle + this.rps * t);
+        this.angle = (this.oAngle + this.rps * t);
 
         Super.update(t);
 
     },
 
-    collision: function(t, other) {
+    obbCollision: function(t, other) {
         this.destroy(t);
     },
 

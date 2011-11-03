@@ -39,7 +39,7 @@ var BulletTypes = {
     },
 
     ray: {
-        speed: 30,
+        speed: 20,
         sx: 0.5,
         sy: 1
     }
@@ -164,7 +164,7 @@ var BulletComboTypes = {
 
             at: 0,
             type: 'ray',
-            r: ['r', -45, 45],
+            r: ['r', -10, 45],
             dr: 0,
             di: 0
 
@@ -172,7 +172,7 @@ var BulletComboTypes = {
 
             at: 0,
             type: 'ray',
-            r: ['r', -45, 45],
+            r: ['r', -10, 45],
             dr: 0,
             di: 0
 
@@ -180,7 +180,7 @@ var BulletComboTypes = {
 
             at: 0,
             type: 'ray',
-            r: ['r', -45, 45],
+            r: ['r', -10, 45],
             dr: 0,
             di: 0
 
@@ -188,13 +188,13 @@ var BulletComboTypes = {
 
             at: 0,
             type: 'ray',
-            r: ['r', -45, 45],
+            r: ['r', -10, 45],
             dr: 0,
             di: 0
 
         }],
 
-        interval: 25
+        interval: 100
 
     }
 

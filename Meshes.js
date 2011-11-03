@@ -47,19 +47,21 @@ var MeshObject = Class(PositionedObject, {
 
         this.mesh.position.x = this.x;
         this.mesh.position.y = this.y;
-        this.mesh.scale.x = this.size.x / this.mesh.size;
-        this.mesh.scale.y = this.size.y / this.mesh.size;
+        this.updateSize();
 
         this.scene.add(this.mesh);
 
     },
 
-    update: function(t) {
+    updateSize: function() {
+        this.mesh.scale.x = this.size.x / this.mesh.size;
+        this.mesh.scale.y = this.size.y / this.mesh.size;
+    },
 
+    update: function(t) {
         this.mesh.position.x = this.x;
         this.mesh.position.y = this.y;
-        this.mesh.rotation.z = this.angle;
-
+        this.mesh.rotation.z = -this.angle;
     },
 
     destroy: function(t) {

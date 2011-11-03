@@ -62,7 +62,7 @@ var ShipPool = Class(CollideMeshPool, {
         Super.create({
             x: x,
             y: y,
-            angle: Math.random() * 360
+            angle: 25
         });
 
     }
